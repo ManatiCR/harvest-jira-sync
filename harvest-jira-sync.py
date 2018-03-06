@@ -26,12 +26,6 @@ harvestRequestHeaders = {
     "Authorization": "Bearer " + os.environ.get("HARVEST_ACCESS_TOKEN"),
     "Harvest-Account-ID": os.environ.get("HARVEST_ACCOUNT_ID")
 }
-timeEntriesUrlParam = urllib.parse.urlencode({'updated_since': date.today()})
-timeEntriesUrl = harvestBaseUrl + "time_entries?%s" % timeEntriesUrlParam
-timeEntriesRequest = urllib.request.Request(url=timeEntriesUrl, headers=harvestRequestHeaders)
-timeEntriesResponse = urllib.request.urlopen(timeEntriesRequest, timeout=5)
-timeEntriesResponseBody = timeEntriesResponse.read().decode("utf-8")
-timeEntriesJsonResponse = json.loads(timeEntriesResponseBody)
 
 # Jira request params.
 jiraBaseUrl = "https://" + os.environ.get("JIRA_SITE_DOMAIN") + "/rest/api/2/"
@@ -139,6 +133,13 @@ def updateJiraWorklog(harvestEntry, jiraIssueId, jiraWorklogId):
         jiraWorklogUpdateJsonResponse = json.loads(jiraWorklogUpdateResponseBody)
         return  jiraWorklogUpdateJsonResponse['id']
 
+# Processing the Harvest time entries and creating the Jira Worklogs.
+timeEntriesUrlParam = urllib.parse.urlencode({'updated_since': date.today()})
+timeEntriesUrl = harvestBaseUrl + "time_entries?%s" % timeEntriesUrlParam
+timeEntriesRequest = urllib.request.Request(url=timeEntriesUrl, headers=harvestRequestHeaders)
+timeEntriesResponse = urllib.request.urlopen(timeEntriesRequest, timeout=5)
+timeEntriesResponseBody = timeEntriesResponse.read().decode("utf-8")
+timeEntriesJsonResponse = json.loads(timeEntriesResponseBody)
 for entry in timeEntriesJsonResponse['time_entries']:
     if 'notes' in entry and isinstance(entry['notes'], str):
         jiraIdMatch = jiraIdRegex.match(entry['notes'])
