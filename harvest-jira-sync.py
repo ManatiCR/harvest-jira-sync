@@ -6,10 +6,19 @@ import urllib.request
 import urllib.parse
 import sqlite3
 import re
+import logging
 import base64
 from datetime import date
 from datetime import datetime
 from urllib.error import URLError, HTTPError
+
+# Logging configuration.
+logger = logging.getLogger('harvest-jira-sync')
+loggingHanlder = logging.FileHandler('harvest-jira-sync.log')
+loggingFormatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+loggingHanlder.setFormatter(loggingFormatter)
+logger.addHandler(loggingHanlder)
+logger.setLevel(logging.WARNING)
 
 # Database connection with the sqlite file.
 databaseConnection = sqlite3.connect('harvest-jira-sync.db')
@@ -59,6 +68,7 @@ def getJiraWorklogById(jiraId, worklogId):
     try:
         jiraIssuesResponse = urllib.request.urlopen(jiraIssueRequest, timeout=5)
     except HTTPError as error:
+        logger.error("Error in getJiraWorklogById() function, description: " + error)
         return False
     else:
         jiraIssueResponseBody = jiraIssuesResponse.read().decode("utf-8")
@@ -72,6 +82,7 @@ def getJiraIssueById(jiraId):
     try:
         jiraIssuesResponse = urllib.request.urlopen(jiraIssueRequest, timeout=5)
     except HTTPError as error:
+        logger.error("Error in getJiraIssueById() function, description: " + error)
         return False
     else:
         jiraIssueResponseBody = jiraIssuesResponse.read().decode("utf-8")
@@ -94,7 +105,7 @@ def createJiraWorklog(harvestEntry, jiraIssueId):
     try:
         jiraWorklogResponse = urllib.request.urlopen(jiraWorklogRequest, timeout=5)
     except HTTPError as error:
-        print(error)
+        logger.error("Error in request in createJiraWorklog() function, description: " + error)
         return False
     else:
         jiraWorklogResponseBody = jiraWorklogResponse.read().decode("utf-8")
@@ -104,9 +115,10 @@ def createJiraWorklog(harvestEntry, jiraIssueId):
             databaseCursor.execute("INSERT INTO harvest_entries_jira_worklog_map VALUES (?,?)", harvestJiraRelation)
             databaseConnection.commit()
         except sqlite3.Error as error:
-            print(error)
+            logger.error("Error in mysql in createJiraWorklog() function, description: " + error)
         else:
-            print("worklog: " + jiraWorklogJsonResponse['id'])
+            logger.error("Error in updateJiraWorklog() function, description: " + jiraWorklogJsonResponse['id'])
+            return jiraWorklogJsonResponse['id']
 
 
 def updateJiraWorklog(harvestEntry, jiraIssueId, jiraWorklogId):
@@ -127,10 +139,12 @@ def updateJiraWorklog(harvestEntry, jiraIssueId, jiraWorklogId):
     try:
         jiraWorklogUpdateResponse = urllib.request.urlopen(jiraWorklogUpdateRequest, timeout=5)
     except HTTPError as error:
+        logger.error("Error in updateJiraWorklog() function, description: " + error)
         return False
     else:
         jiraWorklogUpdateResponseBody = jiraWorklogUpdateResponse.read().decode("utf-8")
         jiraWorklogUpdateJsonResponse = json.loads(jiraWorklogUpdateResponseBody)
+        logger.error("Error in updateJiraWorklog() function, description: " + jiraWorklogUpdateJsonResponse['id'])
         return  jiraWorklogUpdateJsonResponse['id']
 
 # Processing the Harvest time entries and creating the Jira Worklogs.
