@@ -1,0 +1,5 @@
+# General ignores
+*.db
+*.log
+*.tgz
+*.zip
