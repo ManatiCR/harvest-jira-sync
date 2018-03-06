@@ -17,9 +17,9 @@ databaseConnection.row_factory = sqlite3.Row
 databaseCursor = databaseConnection.cursor()
 
 # Regex to get the Jira ID in the Harvest entry description.
-jiraIdRegex = re.compile('^[A-Z]+\-\d+')
+jiraIdRegex = re.compile('[A-Z]+\-\d+')
 
-# Harvest Time entries request params.
+# Harvest Time entries requests headers.
 harvestBaseUrl = "https://api.harvestapp.com/v2/"
 harvestRequestHeaders = {
     "User-Agent": "Harvest-Jira Sync",
@@ -27,7 +27,7 @@ harvestRequestHeaders = {
     "Harvest-Account-ID": os.environ.get("HARVEST_ACCOUNT_ID")
 }
 
-# Jira request params.
+# Jira requests Headers.
 jiraBaseUrl = "https://" + os.environ.get("JIRA_SITE_DOMAIN") + "/rest/api/2/"
 jiraCredentials = os.environ.get("JIRA_USER") + ":" +os.environ.get("JIRA_API_TOKEN")
 jiraEncodedCredentials = base64.b64encode(jiraCredentials.encode('utf8'))
@@ -150,7 +150,6 @@ for entry in timeEntriesJsonResponse['time_entries']:
                 relation = getHarvestEntryJiraWorklogRelation(entry['id']);
                 if relation:
                     updatedWorlog = updateJiraWorklog(entry, jiraIssueId, relation['jira_worklog_id'])
-
                 else:
                     jiraWorklogId = createJiraWorklog(entry, jiraIssueId)
 
