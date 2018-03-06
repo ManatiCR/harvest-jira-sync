@@ -34,7 +34,7 @@ timeEntriesResponseBody = timeEntriesResponse.read().decode("utf-8")
 timeEntriesJsonResponse = json.loads(timeEntriesResponseBody)
 
 # Jira request params.
-jiraBaseUrl = "https://manati.atlassian.net/rest/api/2/"
+jiraBaseUrl = "https://" + os.environ.get("JIRA_SITE_DOMAIN") + "/rest/api/2/"
 jiraCredentials = os.environ.get("JIRA_USER") + ":" +os.environ.get("JIRA_API_TOKEN")
 jiraEncodedCredentials = base64.b64encode(jiraCredentials.encode('utf8'))
 jiraRequestGetHeaders = {
