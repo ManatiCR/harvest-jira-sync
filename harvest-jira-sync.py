@@ -82,7 +82,6 @@ def getJiraIssueById(jiraId):
     try:
         jiraIssuesResponse = urllib.request.urlopen(jiraIssueRequest, timeout=5)
     except HTTPError as error:
-        logger.error("In getJiraIssueById() function, description: " + str(error))
         return False
     else:
         jiraIssueResponseBody = jiraIssuesResponse.read().decode("utf-8")
