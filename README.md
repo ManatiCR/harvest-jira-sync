@@ -24,4 +24,4 @@ This project is a simple script that help you to Sync your harvest time data wit
 
 # Debugging
 
-If you are having some unexpected behaivor you could take a look in the log file this script, the log file will be created automatically on error in the same root path of the `harvest-jira-sync.py` script.
+If you are having some unexpected behaivor you could take a look in the log file for this script, the log file will be created automatically on error in the same root path of the `harvest-jira-sync.py` script.
