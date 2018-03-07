@@ -3,3 +3,4 @@
 *.log
 *.tgz
 *.zip
+.env
