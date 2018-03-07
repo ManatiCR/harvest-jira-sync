@@ -68,7 +68,7 @@ def getJiraWorklogById(jiraId, worklogId):
     try:
         jiraIssuesResponse = urllib.request.urlopen(jiraIssueRequest, timeout=5)
     except HTTPError as error:
-        logger.error("Error in getJiraWorklogById() function, description: " + error)
+        logger.error("In getJiraWorklogById() function, description: " + str(error))
         return False
     else:
         jiraIssueResponseBody = jiraIssuesResponse.read().decode("utf-8")
@@ -82,6 +82,7 @@ def getJiraIssueById(jiraId):
     try:
         jiraIssuesResponse = urllib.request.urlopen(jiraIssueRequest, timeout=5)
     except HTTPError as error:
+        logger.error("In getJiraIssueById() function, description: " + str(error))
         return False
     else:
         jiraIssueResponseBody = jiraIssuesResponse.read().decode("utf-8")
@@ -104,7 +105,7 @@ def createJiraWorklog(harvestEntry, jiraIssueId):
     try:
         jiraWorklogResponse = urllib.request.urlopen(jiraWorklogRequest, timeout=5)
     except HTTPError as error:
-        logger.error("Error in request in createJiraWorklog() function, description: " + error)
+        logger.error("In request, createJiraWorklog function " + str(error))
         return False
     else:
         jiraWorklogResponseBody = jiraWorklogResponse.read().decode("utf-8")
@@ -114,9 +115,8 @@ def createJiraWorklog(harvestEntry, jiraIssueId):
             databaseCursor.execute("INSERT INTO harvest_entries_jira_worklog_map VALUES (?,?)", harvestJiraRelation)
             databaseConnection.commit()
         except sqlite3.Error as error:
-            logger.error("Error in mysql in createJiraWorklog() function, description: " + error)
+            logger.error("In sqlite INSERT in createJiraWorklog() function, description: " + str(error))
         else:
-            logger.error("Error in updateJiraWorklog() function, description: " + jiraWorklogJsonResponse['id'])
             return jiraWorklogJsonResponse['id']
 
 
@@ -138,32 +138,35 @@ def updateJiraWorklog(harvestEntry, jiraIssueId, jiraWorklogId):
     try:
         jiraWorklogUpdateResponse = urllib.request.urlopen(jiraWorklogUpdateRequest, timeout=5)
     except HTTPError as error:
-        logger.error("Error in updateJiraWorklog() function, description: " + error)
+        logger.error("In updateJiraWorklog() function, description: " + str(error))
         return False
     else:
         jiraWorklogUpdateResponseBody = jiraWorklogUpdateResponse.read().decode("utf-8")
         jiraWorklogUpdateJsonResponse = json.loads(jiraWorklogUpdateResponseBody)
-        logger.error("Error in updateJiraWorklog() function, description: " + jiraWorklogUpdateJsonResponse['id'])
         return  jiraWorklogUpdateJsonResponse['id']
 
 # Processing the Harvest time entries and creating the Jira Worklogs.
 timeEntriesUrlParam = urllib.parse.urlencode({'updated_since': date.today()})
 timeEntriesUrl = harvestBaseUrl + "time_entries?%s" % timeEntriesUrlParam
 timeEntriesRequest = urllib.request.Request(url=timeEntriesUrl, headers=harvestRequestHeaders)
-timeEntriesResponse = urllib.request.urlopen(timeEntriesRequest, timeout=5)
-timeEntriesResponseBody = timeEntriesResponse.read().decode("utf-8")
-timeEntriesJsonResponse = json.loads(timeEntriesResponseBody)
-for entry in timeEntriesJsonResponse['time_entries']:
-    if 'notes' in entry and isinstance(entry['notes'], str):
-        jiraIdMatch = jiraIdRegex.match(entry['notes'])
-        if jiraIdMatch:
-            jiraId = jiraIdMatch.group()
-            jiraIssueId = getJiraIssueById(jiraId)
-            if jiraIssueId:
-                relation = getHarvestEntryJiraWorklogRelation(entry['id']);
-                if relation:
-                    updatedWorlog = updateJiraWorklog(entry, jiraIssueId, relation['jira_worklog_id'])
-                else:
-                    jiraWorklogId = createJiraWorklog(entry, jiraIssueId)
+try:
+    timeEntriesResponse = urllib.request.urlopen(timeEntriesRequest, timeout=5)
+except HTTPError as error:
+    logger.error("Getting the harvest time entries, description: " + str(error))
+else:
+    timeEntriesResponseBody = timeEntriesResponse.read().decode("utf-8")
+    timeEntriesJsonResponse = json.loads(timeEntriesResponseBody)
+    for entry in timeEntriesJsonResponse['time_entries']:
+        if 'notes' in entry and isinstance(entry['notes'], str):
+            jiraIdMatch = jiraIdRegex.match(entry['notes'])
+            if jiraIdMatch:
+                jiraId = jiraIdMatch.group()
+                jiraIssueId = getJiraIssueById(jiraId)
+                if jiraIssueId:
+                    relation = getHarvestEntryJiraWorklogRelation(entry['id']);
+                    if relation:
+                        updatedWorlog = updateJiraWorklog(entry, jiraIssueId, relation['jira_worklog_id'])
+                    else:
+                        jiraWorklogId = createJiraWorklog(entry, jiraIssueId)
 
 databaseConnection.close()
