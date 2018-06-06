@@ -98,7 +98,8 @@ def createJiraWorklog(harvestEntry, jiraIssueId):
     'issueId': jiraIssueId,
     'timeSpentSeconds': harvestEntry['hours']*3600
     }
-    jiraWorklogUrl = jiraBaseUrl + "issue/" + str(jiraIssueId) + "/worklog"
+    queryParams = urllib.parse.urlencode({'adjustEstimate': 'leave', 'notifyUsers': False})
+    jiraWorklogUrl = jiraBaseUrl + "issue/" + str(jiraIssueId) + "/worklog?%s" % queryParams
     encodedData = json.dumps(worklog).encode('utf8')
     jiraWorklogRequest = urllib.request.Request(url=jiraWorklogUrl, data=encodedData, headers=jiraRequestPostHeaders, origin_req_host=None, unverifiable=False, method='POST')
     try:
